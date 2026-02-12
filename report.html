@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ลงทะเบียนบุคคล - Natthanan</title>
+    <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <header class="site-header">
+        <div class="container header-container">
+            <div class="logo">
+                <a href="index.html">
+                    <img src="โลโก้.png" alt="Logo" class="site-logo">
+                    <div class="logo-text"><h1>WellnessHUB เทศบาลตำบลบ้านเชี่ยวหลาน</h1><span>อำเภอบ้านตาขุน จังหวัดสุราษฎร์ธานี</span></div>
+                </a>
+            </div>
+            <button class="mobile-menu-btn" onclick="toggleMenu()"><i class="fas fa-bars"></i></button>
+            <nav class="main-nav" id="mainNav">
+                <ul>
+                    <li><a href="index.html">หน้าแรก</a></li>
+                    <li><a href="monitor.html">มอนิเตอร์สุขภาพ</a></li>
+                    <li><a href="report.html">บันทึกข้อมูล</a></li>
+                    <li><a href="chat.html">AI ปรึกษา</a></li>
+        <li><a href="#" class="btn-primary">โทร: 08X-XXX-XXXX</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <main class="main-content">
+        <div class="container">
+            
+            <div class="patient-manager-section">
+                <h2 class="section-title"><i class="fas fa-user-plus"></i> ลงทะเบียนบุคคลเข้าสู่ระบบ</h2>
+                
+                <div class="add-patient-box">
+                    <!-- 1. เลือกรูป -->
+                    <div class="image-upload-wrapper">
+                        <label for="imgInput" class="upload-btn">
+                            <i class="fas fa-camera"></i> <span id="fileName">รูปถ่าย</span>
+                        </label>
+                        <input type="file" id="imgInput" accept="image/*" onchange="updateFileName()">
+                    </div>
+                    
+                    <!-- 2. ชื่อ -->
+                    <input type="text" id="inputName" placeholder="ชื่อ-นามสกุล..." style="flex: 2;">
+                    
+                    <!-- 3. อายุ -->
+                    <input type="number" id="inputAge" placeholder="อายุ" style="width: 80px; text-align: center;">
+                    
+                    <!-- 4. เลือกประเภท (ใหม่) -->
+                    <select id="inputType" style="padding: 10px; border-radius: 6px; border: 1px solid #ddd; font-family: 'Prompt'; color: var(--primary-color); font-weight: 600;">
+                        <option value="tourist">นักท่องเที่ยว</option>
+                        <option value="citizen">ประชาชน</option>
+                    </select>
+                    
+                    <button onclick="addData()" class="btn-add"><i class="fas fa-save"></i> บันทึก</button>
+                </div>
+
+                <!-- รายชื่อที่บันทึกแล้ว -->
+                <div class="patient-list" id="personList"></div>
+            </div>
+
+            <hr class="divider">
+
+            <!-- แสดงรายละเอียดเมื่อเลือกคน -->
+            <div id="recordSection" style="display: none;">
+                <div class="dashboard-container">
+                    
+                    <aside class="profile-sidebar">
+                        <div class="photo-frame">
+                            <img id="currentImg" src="" alt="Profile Photo">
+                        </div>
+                        
+                        <div class="profile-info">
+                            <h3 id="currentName">---</h3>
+                            <p style="color: #666; margin-bottom: 10px;">อายุ: <span id="currentAge">-</span> ปี</p>
+                            
+                            <!-- แสดงสถานะ -->
+                            <div id="currentTypeBadge" class="status-badge">
+                                -
+                            </div>
+                        </div>
+
+                        <button onclick="deleteCurrentData()" class="btn-delete-full">
+                            <i class="fas fa-trash-alt"></i> ลบข้อมูลคนนี้
+                        </button>
+                    </aside>
+
+                    <div class="working-area">
+                        <div class="form-card" style="text-align: center; padding: 50px;">
+                            <i class="fas fa-check-circle" style="font-size: 60px; color: #4caf50; margin-bottom: 20px;"></i>
+                            <h3>บันทึกข้อมูลสำเร็จ</h3>
+                            <p>ข้อมูลถูกส่งไปยังหน้า Monitor แยกตามประเภทเรียบร้อยแล้ว</p>
+                            <a href="monitor.html" class="btn-primary" style="display: inline-block; margin-top: 20px; text-decoration: none;">
+                                ไปดูหน้า Monitor <i class="fas fa-arrow-right"></i>
+                            </a>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <script src="script.js"></script>
+    <script>
+        // --- Logic ลงทะเบียน ---
+        let personsData = JSON.parse(localStorage.getItem('natthanan_persons')) || [];
+        let currentIndex = -1;
+        const defaultImg = "https://cdn-icons-png.flaticon.com/512/847/847969.png"; 
+
+        renderList();
+
+        function updateFileName() {
+            const input = document.getElementById('imgInput');
+            const span = document.getElementById('fileName');
+            if(input.files && input.files[0]) span.innerText = "✓ เลือกแล้ว";
+        }
+
+        function addData() {
+            const name = document.getElementById('inputName').value.trim();
+            const age = document.getElementById('inputAge').value || "-";
+            const type = document.getElementById('inputType').value; // รับค่า citizen หรือ tourist
+            const imgInput = document.getElementById('imgInput');
+
+            if (!name) { alert("กรุณาใส่ชื่อ"); return; }
+
+            if (imgInput.files && imgInput.files[0]) {
+                const reader = new FileReader();
+                reader.onload = function(e) { saveToLocal(name, age, type, e.target.result); };
+                reader.readAsDataURL(imgInput.files[0]);
+            } else {
+                saveToLocal(name, age, type, defaultImg);
+            }
+        }
+
+        function saveToLocal(name, age, type, img) {
+            personsData.push({ id: Date.now(), name, age, type, photo: img });
+            localStorage.setItem('natthanan_persons', JSON.stringify(personsData));
+            
+            // Clear inputs
+            document.getElementById('inputName').value = '';
+            document.getElementById('inputAge').value = '';
+            document.getElementById('fileName').innerText = "รูปถ่าย";
+            
+            renderList();
+            selectPerson(personsData.length - 1);
+        }
+
+        function renderList() {
+            const list = document.getElementById('personList');
+            list.innerHTML = '';
+            personsData.forEach((p, i) => {
+                const btn = document.createElement('div');
+                btn.className = `patient-chip ${i === currentIndex ? 'active' : ''}`;
+                // แยกสีขอบตามประเภท
+                const borderColor = p.type === 'citizen' ? '#ff9800' : '#2196f3';
+                btn.style.borderLeft = `4px solid ${borderColor}`;
+                
+                btn.innerHTML = `<img src="${p.photo}" class="chip-avatar"><span>${p.name}</span>`;
+                btn.onclick = () => selectPerson(i);
+                list.appendChild(btn);
+            });
+        }
+
+        function selectPerson(i) {
+            currentIndex = i;
+            const p = personsData[i];
+            document.getElementById('recordSection').style.display = 'block';
+            document.getElementById('currentName').innerText = p.name;
+            document.getElementById('currentAge').innerText = p.age;
+            document.getElementById('currentImg').src = p.photo;
+            
+            // ตั้งค่าป้ายสถานะ
+            const badge = document.getElementById('currentTypeBadge');
+            if(p.type === 'citizen') {
+                badge.innerHTML = '<i class="fas fa-home"></i> ประชาชนในพื้นที่';
+                badge.style.background = '#fff3e0';
+                badge.style.color = '#ef6c00';
+            } else {
+                badge.innerHTML = '<i class="fas fa-suitcase"></i> นักท่องเที่ยว';
+                badge.style.background = '#e3f2fd';
+                badge.style.color = '#1565c0';
+            }
+
+            renderList();
+        }
+
+        function deleteCurrentData() {
+            if(confirm('ยืนยันการลบข้อมูลนี้?')) {
+                personsData.splice(currentIndex, 1);
+                localStorage.setItem('natthanan_persons', JSON.stringify(personsData));
+                location.reload();
+            }
+        }
+    </script>
+</body>
+</html>

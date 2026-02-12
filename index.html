@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>บริการดูแลผู้ป่วยและผู้สูงอายุ</title>
+    <!-- เรียกใช้ฟอนต์ Prompt เพื่อให้เหมือนเว็บสมัยใหม่ -->
+    <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <!-- เรียกใช้ไฟล์ CSS -->
+    <link rel="stylesheet" href="style.css">
+    <!-- Icon library (FontAwesome) -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+
+    <!-- ส่วนหัวเว็บไซต์ (Header) -->
+    <header class="site-header">
+        <div class="container header-container">
+           <!-- ค้นหา <div class="logo"> ในไฟล์ index.html แล้วแก้เป็นแบบนี้ -->
+<div class="logo">
+    <a href="index.html">
+        <!-- เปลี่ยนลิงก์ src เป็น path รูปภาพของคุณ -->
+        <!-- ในตัวอย่างนี้ผมใส่รูป Placeholder ไว้ให้เห็นภาพก่อน -->
+        <img src="โลโก้.png" alt="Natthanan Logo" class="site-logo">
+        
+        <!-- ถ้าอยากมีข้อความต่อท้ายโลโก้ ให้ใส่ตรงนี้ (ถ้าไม่มีให้ลบ div นี้ทิ้ง) -->
+        <div class="logo-text">
+            <h1>WellnessHUB เทศบาลตำบลบ้านเชี่ยวหลาน</h1>
+            <span>อำเภอบ้านตาขุน จังหวัดสุราษฎร์ธานี</span>
+        </div>
+    </a>
+</div>
+            
+            <!-- ปุ่มเมนูสำหรับมือถือ -->
+            <button class="mobile-menu-btn" onclick="toggleMenu()">
+                <i class="fas fa-bars"></i>
+            </button>
+
+            <!-- เมนูหลัก -->
+            <nav class="main-nav" id="mainNav">
+    <ul>
+                    <li><a href="index.html">หน้าแรก</a></li>
+                    <li><a href="monitor.html">มอนิเตอร์สุขภาพ</a></li>
+                    <li><a href="report.html">บันทึกข้อมูล</a></li>
+                    <li><a href="chat.html">AI ปรึกษา</a></li>
+        <li><a href="#" class="btn-primary">โทร: 08X-XXX-XXXX</a></li>
+                </ul>
+</nav>
+        </div>
+    </header>
+
+    <!-- ส่วนเนื้อหาหลัก (Main Content) -->
+    <!-- ส่วนเนื้อหาหลัก (Main Content) - ปรับปรุงใหม่สำหรับท่องเที่ยว -->
+    <main class="main-content">
+        <div class="container">
+            
+            <!-- ส่วนสไลด์โชว์รูปภาพ (Hero Slider) -->
+            <div class="slideshow-container">
+                <!-- รูปที่ 1: วิวเขื่อนมุมสูง -->
+                <div class="mySlides fade">
+                    <img src="แนะนำ.jpg" alt="เขื่อนเชี่ยวหลาน">
+                    <div class="text-caption">เขื่อนเชี่ยวหลาน"</div>
+                </div>
+
+                <!-- รูปที่ 2: เขาสามเกลอ -->
+                <div class="mySlides fade">
+                    <img src="https://images.unsplash.com/photo-1552465011-b4e21bf6e79a?ixlib=rb-1.2.1&auto=format&fit=crop&w=1200&q=80" alt="เขาสามเกลอ">
+                    <div class="text-caption">จุดเช็คอินยอดฮิต "เขาสามเกลอ"</div>
+                </div>
+
+                <!-- รูปที่ 3: กิจกรรมพายเรือ -->
+                <div class="mySlides fade">
+                    <img src="https://images.unsplash.com/photo-1507525428034-b723cf961d3e?ixlib=rb-1.2.1&auto=format&fit=crop&w=1200&q=80" alt="กิจกรรมท่องเที่ยว">
+                    <div class="text-caption">สัมผัสธรรมชาติและกิจกรรมทางน้ำ</div>
+                </div>
+
+                <!-- จุดวงกลม -->
+                <div class="dots-container">
+                    <span class="dot"></span> 
+                    <span class="dot"></span> 
+                    <span class="dot"></span> 
+                </div>
+            </div>
+
+            <!-- ส่วนแนะนำเทศบาล/สถานที่ -->
+            <div class="intro-section">
+                <h1 class="page-title text-center">เทศบาลตำบลบ้านเชี่ยวหลาน</h1>
+                <p class="text-center description">
+                    ดินแดนแห่งขุนเขาและสายน้ำมรกต สัมผัสบรรยากาศ "กุ้ยหลินเมืองไทย" ณ เขื่อนรัชชประภา <br>
+                    แหล่งท่องเที่ยวธรรมชาติที่สวยงามระดับโลก พร้อมกิจกรรมมากมายรอคุณมาสัมผัส
+                </p>
+            </div>
+
+            <hr class="divider">
+
+            <!-- ไฮไลท์สถานที่ท่องเที่ยว (Grid Layout) -->
+            <h2 class="section-title"><i class="fas fa-map-marked-alt"></i> แหล่งท่องเที่ยวห้ามพลาด</h2>
+            
+            <div class="attraction-grid">
+                
+                <!-- การ์ดสถานที่ 1 -->
+                <div class="attraction-card">
+                    <div class="card-img">
+                        <img src="https://thailandtourismdirectory.go.th/assets/upload/2017/11/14/20171114d35c2b0051e505230919245155f94b8e154625.jpg" alt="เขาสามเกลอ" onerror="this.src='https://images.unsplash.com/photo-1590523277543-a94d2e4eb00b?auto=format&fit=crop&w=500&q=60'">
+                    </div>
+                    <div class="card-content">
+                        <h3>เขาสามเกลอ</h3>
+                        <p>แลนด์มาร์คสำคัญที่ต้องมาถ่ายรูป ภูเขาหินปูน 3 ลูกตั้งตระหง่านกลางน้ำ สัญลักษณ์แห่งเขื่อนเชี่ยวหลาน</p>
+                    </div>
+                </div>
+
+                <!-- การ์ดสถานที่ 2 -->
+                <div class="attraction-card">
+                    <div class="card-img">
+                        <img src="https://thailandtourismdirectory.go.th/assets/upload/2017/11/08/20171108c5c7d0d04c4424367919904229670188145214.jpg" alt="จุดชมวิวสันเขื่อน" onerror="this.src='https://images.unsplash.com/photo-1501785888041-af3ef285b470?auto=format&fit=crop&w=500&q=60'">
+                    </div>
+                    <div class="card-content">
+                        <h3>จุดชมวิวสันเขื่อน</h3>
+                        <p>ชมทัศนียภาพมุมกว้างของเขื่อนรัชชประภา สูดอากาศบริสุทธิ์ยามเช้า และชมพระอาทิตย์ตกดินที่สวยงาม</p>
+                    </div>
+                </div>
+
+                <!-- การ์ดสถานที่ 3 -->
+                <div class="attraction-card">
+                    <div class="card-img">
+                        <img src="ถ้ำ.jpg" alt="ถ้ำปะการัง" onerror="this.src='https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?auto=format&fit=crop&w=500&q=60'">
+                    </div>
+                    <div class="card-content">
+                        <h3>ถ้ำปะการัง</h3>
+                        <p>ผจญภัยเดินป่าและนั่งแพไม้ไผ่ ชมความงามของหินงอกหินย้อยรูปร่างคล้ายปะการังภายในถ้ำ</p>
+                    </div>
+                </div>
+
+                <!-- การ์ดสถานที่ 4 -->
+                <div class="attraction-card">
+                    <div class="card-img">
+                        <img src="เรือ.jpg" alt="ล่องเรือ/พายเรือ">
+                    </div>
+                    <div class="card-content">
+                        <h3>กิจกรรมทางน้ำ</h3>
+                        <p>สนุกกับการพายเรือคายัค ล่องเรือชมธรรมชาติ และกระโดดน้ำเล่นหน้าแพที่พัก ท่ามกลางน้ำใสสะอาด</p>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- ส่วนข้อมูลติดต่อ/การเดินทาง -->
+            <div class="travel-info-box">
+                <div class="info-icon"><i class="fas fa-info-circle"></i></div>
+                <div class="info-text">
+                    <h3>เตรียมตัวก่อนมาเยือน</h3>
+                    <ul>
+                        <li><i class="fas fa-check"></i> ฤดูกาลท่องเที่ยว: เที่ยวได้ตลอดทั้งปี (ช่วงไฮซีซั่น พ.ย. - เม.ย.)</li>
+                        <li><i class="fas fa-check"></i> การเดินทาง: ห่างจากสนามบินสุราษฎร์ธานีประมาณ 1 ชม.</li>
+                        <li><i class="fas fa-check"></i> สัญญาณโทรศัพท์: มีสัญญาณเฉพาะจุด (AIS/True) ในบางพื้นที่ของเขื่อน</li>
+                        <li><i class="fas fa-check"></i> ติดต่อเทศบาล: 077-XXX-XXX</li>
+                    </ul>
+                </div>
+                <a href="monitor.html" class="btn-check-status">เช็คสถานะนักท่องเที่ยว (Smart Monitor)</a>
+            </div>
+
+        </div>
+    </main>
+
+    <!-- ส่วนท้ายเว็บ (Footer) -->
+    <footer class="site-footer">
+        <div class="container">
+            <div class="footer-grid">
+                <div class="footer-col">
+                    <h4>เกี่ยวกับเรา</h4>
+                    <p>บริษัท นัฐนันท์ ดูแลและบริการ จำกัด ศูนย์รวมพนักงานดูแลผู้สูงอายุ ดูแลผู้ป่วย พี่เลี้ยงเด็ก และแม่บ้าน มืออาชีพ บริการด้วยใจ ดุจญาติมิตร</p>
+                </div>
+                <div class="footer-col">
+                    <h4>ข้อมูลติดต่อ</h4>
+                    <p><i class="fas fa-map-marker-alt"></i> สำนักงานใหญ่: กรุงเทพมหานคร</p>
+                    <p><i class="fas fa-phone"></i> 082-204-9816 (คุณปันปัน)</p>
+                    <p><i class="fas fa-envelope"></i> contact@natthanan.com</p>
+                </div>
+                <div class="footer-col">
+                    <h4>เมนูลัด</h4>
+                    <ul>
+                        <li><a href="#">หน้าแรก</a></li>
+                        <li><a href="#">บริการ</a></li>
+                        <li><a href="#">ติดต่อเรา</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2024 Natthanan Nursing Home. All Rights Reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- เรียกใช้ไฟล์ JS -->
+    <script src="script.js"></script>
+</body>
+</html>

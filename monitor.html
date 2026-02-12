@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Monitor - Natthanan</title>
+    <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body class="monitor-bg">
+
+    <header class="site-header">
+        <div class="container header-container">
+           <!-- ค้นหา <div class="logo"> ในไฟล์ index.html แล้วแก้เป็นแบบนี้ -->
+<div class="logo">
+    <a href="index.html">
+        <!-- เปลี่ยนลิงก์ src เป็น path รูปภาพของคุณ -->
+        <!-- ในตัวอย่างนี้ผมใส่รูป Placeholder ไว้ให้เห็นภาพก่อน -->
+        <img src="โลโก้.png" alt="Natthanan Logo" class="site-logo">
+        
+        <!-- ถ้าอยากมีข้อความต่อท้ายโลโก้ ให้ใส่ตรงนี้ (ถ้าไม่มีให้ลบ div นี้ทิ้ง) -->
+        <div class="logo-text">
+            <h1>WellnessHUB เทศบาลตำบลบ้านเชี่ยวหลาน</h1>
+            <span>อำเภอบ้านตาขุน จังหวัดสุราษฎร์ธานี</span>
+        </div>
+    </a>
+</div>
+            
+            <!-- ปุ่มเมนูสำหรับมือถือ -->
+            <button class="mobile-menu-btn" onclick="toggleMenu()">
+                <i class="fas fa-bars"></i>
+            </button>
+
+            <!-- เมนูหลัก -->
+            <nav class="main-nav" id="mainNav">
+    <ul>
+                    <li><a href="index.html">หน้าแรก</a></li>
+                    <li><a href="monitor.html">มอนิเตอร์สุขภาพ</a></li>
+                    <li><a href="report.html">บันทึกข้อมูล</a></li>
+                    <li><a href="chat.html">AI ปรึกษา</a></li>
+        <li><a href="#" class="btn-primary">โทร: 08X-XXX-XXXX</a></li>
+                </ul>
+</nav>
+        </div>
+    </header>
+
+
+    <main class="main-content">
+        <div class="container-fluid" style="padding: 0 40px;">
+            <div class="monitor-header">
+                <h2><i class="fas fa-heartbeat"></i> ศูนย์ติดตามสุขภาพ Real-time</h2>
+                <div class="live-indicator">
+                    <div class="blink-dot"></div> Live
+                </div>
+            </div>
+
+            <!-- ปุ่มตัวกรอง -->
+            <div class="filter-bar">
+                <button class="filter-btn active" onclick="setFilter('all', this)">
+                    <i class="fas fa-border-all"></i> ทั้งหมด
+                </button>
+                <button class="filter-btn" onclick="setFilter('citizen', this)">
+                    <i class="fas fa-users"></i> ประชาชน
+                </button>
+                <button class="filter-btn" onclick="setFilter('tourist', this)">
+                    <i class="fas fa-suitcase-rolling"></i> นักท่องเที่ยว
+                </button>
+            </div>
+
+            <!-- Grid แสดงผล 4 คอลัมน์ -->
+            <div class="monitor-grid-4-col" id="mainMonitorGrid"></div>
+
+        </div>
+    </main>
+
+    <script src="script.js"></script>
+    <script>
+        // --- JAVASCRIPT Logic ---
+        
+        let persons = JSON.parse(localStorage.getItem('natthanan_persons')) || [];
+        let currentFilter = 'all'; 
+
+        function setFilter(type, btnElement) {
+            currentFilter = type;
+            document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+            btnElement.classList.add('active');
+            initDashboard();
+        }
+
+        function initDashboard() {
+            const container = document.getElementById('mainMonitorGrid');
+            container.innerHTML = '';
+
+            let displayList = persons;
+            if (currentFilter !== 'all') {
+                displayList = persons.filter(p => p.type === currentFilter);
+            }
+
+            if (displayList.length === 0) {
+                container.innerHTML = `<div class="empty-state" style="grid-column: 1/-1;">ไม่พบข้อมูลในหมวดหมู่นี้</div>`;
+                return;
+            }
+
+            displayList.forEach((p) => {
+                const originalIndex = persons.indexOf(p);
+                
+                // ปุ่ม SOS (เฉพาะนักท่องเที่ยว)
+                let sosBtn = '';
+                if (p.type === 'tourist') {
+                    sosBtn = `<button class="btn-sos-compact" onclick="sendSOS('${p.name}')">SOS</button>`;
+                }
+
+                // สร้าง HTML Card แบบใหม่ (เน้นอ่านง่าย)
+                const cardHtml = `
+                <div class="monitor-card-clean">
+                    <!-- ส่วนหัวการ์ด -->
+                    <div class="card-head-clean">
+                        <div class="user-info">
+                            <img src="${p.photo}" class="avatar-clean">
+                            <div class="text-info">
+                                <div class="name-large">${p.name}</div>
+                                <div class="role-badge ${p.type}">${p.type === 'citizen' ? 'ประชาชน' : 'นักท่องเที่ยว'}</div>
+                            </div>
+                        </div>
+                        ${sosBtn}
+                    </div>
+                    
+                    <!-- ส่วนแสดงค่าสุขภาพ (Grid 2 ช่องใหญ่) -->
+                    <div class="vitals-grid-clean">
+                        
+                        <!-- ช่องความดัน (BP) -->
+                        <!--<div class="vital-box border-right">
+                            <div class="v-label"><i class="fas fa-tachometer-alt"></i> ความดัน (BP)</div>
+                            <div class="v-value-big" id="bp-${originalIndex}">--/--</div>
+                            <div class="v-unit">mmHg</div>
+                        </div> -->
+
+                        <div class="vital-box border-right">
+                            <div class="v-label"><i class="fas fa-tachometer-alt"></i> Spo2</div>
+                            <div class="v-value-big" id="spo2-${originalIndex}">--/--</div>
+                            <div class="v-unit">mmHg</div>
+                        </div>
+
+                        <!-- ช่องหัวใจ (HR) -->
+                        <div class="vital-box">
+                            <div class="v-label"><i class="fas fa-heart"></i> หัวใจ (HR)</div>
+                            <div class="v-value-big" id="hr-${originalIndex}">--</div>
+                            <div class="v-unit">BPM</div>
+                        </div>
+
+                    </div>
+
+                    <!-- ส่วนท้าย (ข้อมูลรอง SpO2, Temp) -->
+                    <div class="footer-stats">
+                        <!--<div class="stat-item">
+                            <span>SpO2:</span> <strong id="spo2-${originalIndex}" style="color:#009688">--%</strong>
+                        </div> -->
+                        <div class="stat-item">
+                            <span>Temp:</span> <strong id="temp-${originalIndex}">--°C</strong>
+                        </div>
+                    </div>
+                </div>`;
+                
+                container.innerHTML += cardHtml;
+            });
+        }
+
+        // ฟังก์ชันสุ่มค่า
+        function simulateVitals() {
+            if (persons.length === 0) return;
+            persons.forEach((p, index) => {
+                const hr = Math.floor(Math.random() * (110 - 60 + 1)) + 60;
+                const sys = Math.floor(Math.random() * (140 - 110 + 1)) + 110;
+                const dia = Math.floor(Math.random() * (90 - 70 + 1)) + 70;
+                const spo2 = Math.floor(Math.random() * (100 - 96 + 1)) + 96;
+                const temp = (Math.random() * (37.5 - 36.5) + 36.5).toFixed(1);
+
+                const hrEl = document.getElementById(`hr-${index}`);
+                if(hrEl) {
+                    hrEl.innerText = hr;
+                    // document.getElementById(`bp-${index}`).innerText = `${sys}/${dia}`;
+                    document.getElementById(`spo2-${index}`).innerText = `${spo2}%`;
+                    document.getElementById(`temp-${index}`).innerText = `${temp}°C`;
+
+                    // เปลี่ยนสีตัวเลขถ้าหัวใจเต้นเร็วเกิน
+                    if(hr > 100) {
+                        hrEl.style.color = '#d32f2f'; // แดง
+                        hrEl.classList.add('pulse-alert');
+                    } else {
+                        hrEl.style.color = '#2c3e50'; // สีเข้มปกติ
+                        hrEl.classList.remove('pulse-alert');
+                    }
+                }
+            });
+        }
+
+        function sendSOS(name) {
+            alert(`🚨 แจ้งเตือนฉุกเฉิน: คุณ ${name} ขอความช่วยเหลือ!
+            ขณะนี้เรากำลังส่งทีมช่วยเหลือไปยังตำแหน่งของคุณ โปรดรอสักครู่`);
+            
+        }
+
+        initDashboard();
+        simulateVitals();
+        setInterval(simulateVitals, 2000);
+    </script>
+</body>
+</html>
