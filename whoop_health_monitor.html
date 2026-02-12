@@ -1,0 +1,1361 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>VitalSync — IoT Health Monitor</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=Barlow+Condensed:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0a0f;
+    --surface: #111118;
+    --surface2: #18181f;
+    --surface3: #22222c;
+    --border: rgba(255,255,255,0.06);
+    --border-active: rgba(255,255,255,0.15);
+    --text: #f0f0f5;
+    --text-dim: #8888a0;
+    --text-muted: #44445a;
+    --accent: #00e5b0;
+    --accent2: #7c6cff;
+    --accent3: #ff4d6d;
+    --accent4: #ffb627;
+    --warn: #ff6b35;
+    --hr-color: #ff4d6d;
+    --spo2-color: #00e5b0;
+    --temp-color: #ffb627;
+    --card-radius: 24px;
+    --glow-accent: 0 0 40px rgba(0,229,176,0.15);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    padding: 20px;
+    overflow-x: hidden;
+  }
+
+  /* Phone frame */
+  .phone-frame {
+    width: 390px;
+    min-height: 844px;
+    background: var(--bg);
+    border-radius: 50px;
+    border: 2px solid rgba(255,255,255,0.1);
+    box-shadow:
+      0 0 0 1px rgba(255,255,255,0.04),
+      0 40px 120px rgba(0,0,0,0.8),
+      inset 0 1px 0 rgba(255,255,255,0.08);
+    overflow: hidden;
+    position: relative;
+  }
+
+  /* Dynamic island */
+  .dynamic-island {
+    width: 126px;
+    height: 36px;
+    background: #000;
+    border-radius: 20px;
+    margin: 16px auto 0;
+    position: relative;
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+  }
+  .island-dot { width: 10px; height: 10px; border-radius: 50%; }
+  .island-dot.green { background: var(--accent); box-shadow: 0 0 8px var(--accent); animation: pulse-dot 2s ease infinite; }
+  .island-dot.cam { background: #333; }
+
+  @keyframes pulse-dot {
+    0%, 100% { opacity: 1; box-shadow: 0 0 8px var(--accent); }
+    50% { opacity: 0.6; box-shadow: 0 0 16px var(--accent); }
+  }
+
+  /* Screen content */
+  .screen {
+    padding: 16px 20px 100px;
+    overflow-y: auto;
+    height: calc(844px - 68px);
+    scrollbar-width: none;
+  }
+  .screen::-webkit-scrollbar { display: none; }
+
+  /* Header */
+  .header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 24px;
+    padding-top: 8px;
+  }
+
+  .header-left .greeting {
+    font-size: 13px;
+    color: var(--text-dim);
+    font-weight: 400;
+    letter-spacing: 0.5px;
+  }
+  .header-left .user-name {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 28px;
+    font-weight: 700;
+    color: var(--text);
+    letter-spacing: 0.5px;
+    line-height: 1.1;
+  }
+  .user-name span { color: var(--accent); }
+
+  .header-right {
+    position: relative;
+  }
+  .avatar {
+    width: 44px;
+    height: 44px;
+    border-radius: 14px;
+    background: linear-gradient(135deg, var(--accent2), var(--accent));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 16px;
+    color: #000;
+    cursor: pointer;
+    border: 2px solid var(--border-active);
+  }
+  .notif-badge {
+    position: absolute;
+    top: -4px;
+    right: -4px;
+    width: 16px;
+    height: 16px;
+    background: var(--accent3);
+    border-radius: 50%;
+    border: 2px solid var(--bg);
+    font-size: 9px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-family: 'Space Mono';
+  }
+
+  /* Live status bar */
+  .live-bar {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 12px 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 20px;
+    position: relative;
+    overflow: hidden;
+  }
+  .live-bar::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(90deg, rgba(0,229,176,0.04), transparent);
+    pointer-events: none;
+  }
+  .live-indicator {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--accent);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    font-family: 'Space Mono';
+  }
+  .live-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--accent);
+    animation: live-pulse 1.5s ease infinite;
+  }
+  @keyframes live-pulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(0,229,176,0.6); }
+    50% { box-shadow: 0 0 0 6px rgba(0,229,176,0); }
+  }
+  .device-info {
+    font-size: 11px;
+    color: var(--text-dim);
+    text-align: right;
+  }
+  .device-info strong {
+    display: block;
+    color: var(--text);
+    font-weight: 600;
+    font-size: 12px;
+  }
+
+  /* Recovery score — WHOOP style hero card */
+  .recovery-card {
+    background: var(--surface);
+    border-radius: var(--card-radius);
+    padding: 24px;
+    margin-bottom: 20px;
+    border: 1px solid var(--border);
+    position: relative;
+    overflow: hidden;
+  }
+  .recovery-card::after {
+    content: '';
+    position: absolute;
+    top: -40px;
+    right: -40px;
+    width: 180px;
+    height: 180px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(0,229,176,0.08) 0%, transparent 70%);
+    pointer-events: none;
+  }
+  .recovery-label {
+    font-size: 11px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    font-weight: 600;
+    margin-bottom: 16px;
+    font-family: 'Space Mono';
+  }
+  .recovery-main {
+    display: flex;
+    align-items: flex-end;
+    gap: 16px;
+    margin-bottom: 20px;
+  }
+  .recovery-score {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 80px;
+    font-weight: 800;
+    line-height: 0.9;
+    color: var(--accent);
+    text-shadow: 0 0 40px rgba(0,229,176,0.3);
+  }
+  .recovery-right {
+    padding-bottom: 8px;
+  }
+  .recovery-status {
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--text);
+    margin-bottom: 4px;
+  }
+  .recovery-sub {
+    font-size: 12px;
+    color: var(--text-dim);
+  }
+
+  /* Arc gauge */
+  .gauge-container {
+    position: relative;
+    margin-bottom: 16px;
+  }
+  .gauge-svg {
+    width: 100%;
+    height: 6px;
+    overflow: visible;
+  }
+  .gauge-track {
+    fill: none;
+    stroke: var(--surface3);
+    stroke-width: 6;
+    stroke-linecap: round;
+  }
+  .gauge-fill {
+    fill: none;
+    stroke: url(#gaugeGrad);
+    stroke-width: 6;
+    stroke-linecap: round;
+    stroke-dasharray: 280;
+    stroke-dashoffset: 56;
+    transition: stroke-dashoffset 1.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+
+  .recovery-stats {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 12px;
+  }
+  .r-stat {
+    background: var(--surface2);
+    border-radius: 14px;
+    padding: 12px;
+    border: 1px solid var(--border);
+  }
+  .r-stat-label {
+    font-size: 10px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 6px;
+    font-family: 'Space Mono';
+  }
+  .r-stat-value {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 22px;
+    font-weight: 700;
+    line-height: 1;
+  }
+  .r-stat-unit {
+    font-size: 10px;
+    color: var(--text-dim);
+    margin-top: 2px;
+  }
+
+  /* Section title */
+  .section-title {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 16px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .section-title span { font-size: 12px; color: var(--accent); cursor: pointer; font-weight: 500; }
+
+  /* Metrics row */
+  .metrics-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+
+  .metric-card {
+    background: var(--surface);
+    border-radius: var(--card-radius);
+    padding: 20px;
+    border: 1px solid var(--border);
+    position: relative;
+    overflow: hidden;
+    cursor: pointer;
+    transition: border-color 0.2s, transform 0.15s;
+  }
+  .metric-card:hover {
+    border-color: var(--border-active);
+    transform: scale(0.98);
+  }
+  .metric-card.alert {
+    border-color: rgba(255,77,109,0.3);
+    background: linear-gradient(135deg, rgba(255,77,109,0.06), var(--surface));
+  }
+
+  .metric-glow {
+    position: absolute;
+    top: -20px;
+    right: -20px;
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    pointer-events: none;
+  }
+  .metric-glow.red { background: radial-gradient(circle, rgba(255,77,109,0.2), transparent 70%); }
+  .metric-glow.green { background: radial-gradient(circle, rgba(0,229,176,0.2), transparent 70%); }
+  .metric-glow.yellow { background: radial-gradient(circle, rgba(255,182,39,0.2), transparent 70%); }
+  .metric-glow.purple { background: radial-gradient(circle, rgba(124,108,255,0.2), transparent 70%); }
+
+  .metric-icon-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 14px;
+  }
+  .metric-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+  }
+  .metric-icon.red { background: rgba(255,77,109,0.15); }
+  .metric-icon.green { background: rgba(0,229,176,0.15); }
+  .metric-icon.yellow { background: rgba(255,182,39,0.15); }
+  .metric-icon.purple { background: rgba(124,108,255,0.15); }
+
+  .metric-badge {
+    font-size: 9px;
+    padding: 3px 7px;
+    border-radius: 20px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    font-family: 'Space Mono';
+  }
+  .badge-normal { background: rgba(0,229,176,0.15); color: var(--accent); }
+  .badge-alert { background: rgba(255,77,109,0.15); color: var(--accent3); }
+  .badge-warn { background: rgba(255,182,39,0.15); color: var(--accent4); }
+
+  .metric-value {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 42px;
+    font-weight: 800;
+    line-height: 1;
+    margin-bottom: 4px;
+  }
+  .metric-value.red { color: var(--hr-color); }
+  .metric-value.green { color: var(--spo2-color); }
+  .metric-value.yellow { color: var(--temp-color); }
+  .metric-value.purple { color: var(--accent2); }
+
+  .metric-unit {
+    font-size: 13px;
+    font-weight: 500;
+    opacity: 0.6;
+    margin-left: 2px;
+  }
+  .metric-label {
+    font-size: 11px;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    font-family: 'Space Mono';
+    margin-bottom: 12px;
+  }
+
+  /* Mini sparkline */
+  .sparkline-wrap {
+    height: 36px;
+    position: relative;
+  }
+  .sparkline-svg {
+    width: 100%;
+    height: 36px;
+  }
+
+  /* HRV full-width card */
+  .hrv-card {
+    background: var(--surface);
+    border-radius: var(--card-radius);
+    padding: 20px;
+    margin-bottom: 20px;
+    border: 1px solid var(--border);
+    position: relative;
+    overflow: hidden;
+  }
+  .hrv-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 6px;
+  }
+  .hrv-title-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .hrv-icon {
+    width: 32px;
+    height: 32px;
+    background: rgba(124,108,255,0.15);
+    border-radius: 9px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 15px;
+  }
+  .hrv-title {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 16px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: var(--text-dim);
+  }
+  .hrv-val {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 36px;
+    font-weight: 800;
+    color: var(--accent2);
+  }
+  .hrv-val span { font-size: 16px; font-weight: 500; color: var(--text-dim); }
+
+  .chart-wrap {
+    height: 70px;
+    margin-top: 12px;
+    position: relative;
+  }
+  .chart-svg {
+    width: 100%;
+    height: 70px;
+    overflow: visible;
+  }
+  .chart-line {
+    fill: none;
+    stroke: var(--accent2);
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    filter: drop-shadow(0 0 4px rgba(124,108,255,0.5));
+  }
+  .chart-area {
+    fill: url(#areaGrad);
+    opacity: 0.5;
+  }
+  .time-labels {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 6px;
+  }
+  .time-label {
+    font-size: 9px;
+    color: var(--text-muted);
+    font-family: 'Space Mono';
+  }
+
+  /* ECG-style waveform */
+  .waveform-card {
+    background: var(--surface);
+    border-radius: var(--card-radius);
+    padding: 20px;
+    margin-bottom: 20px;
+    border: 1px solid rgba(255,77,109,0.2);
+    position: relative;
+    overflow: hidden;
+  }
+  .waveform-card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, rgba(255,77,109,0.03), transparent);
+    pointer-events: none;
+  }
+  .ecg-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 14px;
+  }
+  .ecg-title-area { display: flex; align-items: center; gap: 10px; }
+  .ecg-icon {
+    width: 32px; height: 32px;
+    background: rgba(255,77,109,0.15);
+    border-radius: 9px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 15px;
+  }
+  .ecg-title {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 16px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: var(--text-dim);
+  }
+  .ecg-bpm {
+    font-family: 'Space Mono', monospace;
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--hr-color);
+  }
+  .ecg-bpm span { font-size: 12px; color: var(--text-muted); }
+
+  .ecg-wrap {
+    height: 56px;
+    overflow: hidden;
+    position: relative;
+  }
+  .ecg-svg {
+    width: 200%;
+    height: 56px;
+    animation: ecg-scroll 3s linear infinite;
+  }
+  @keyframes ecg-scroll {
+    0% { transform: translateX(0); }
+    100% { transform: translateX(-50%); }
+  }
+  .ecg-path {
+    fill: none;
+    stroke: var(--hr-color);
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    filter: drop-shadow(0 0 4px rgba(255,77,109,0.5));
+  }
+
+  /* Status grid */
+  .status-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 20px;
+  }
+  .status-item {
+    background: var(--surface);
+    border-radius: 16px;
+    padding: 14px 12px;
+    border: 1px solid var(--border);
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+  .status-item::before {
+    content: '';
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    height: 2px;
+  }
+  .status-item.ok::before { background: var(--accent); }
+  .status-item.warn::before { background: var(--accent4); }
+  .status-item.alert::before { background: var(--accent3); }
+
+  .status-icon { font-size: 20px; margin-bottom: 6px; }
+  .status-name {
+    font-size: 9px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    font-family: 'Space Mono';
+    margin-bottom: 4px;
+  }
+  .status-value {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 18px;
+    font-weight: 700;
+  }
+  .status-item.ok .status-value { color: var(--accent); }
+  .status-item.warn .status-value { color: var(--accent4); }
+  .status-item.alert .status-value { color: var(--accent3); }
+
+  /* Trend card */
+  .trend-card {
+    background: var(--surface);
+    border-radius: var(--card-radius);
+    padding: 20px;
+    margin-bottom: 20px;
+    border: 1px solid var(--border);
+  }
+  .trend-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+  }
+  .trend-title {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 16px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: var(--text-dim);
+  }
+  .period-tabs {
+    display: flex;
+    gap: 4px;
+    background: var(--surface2);
+    border-radius: 8px;
+    padding: 3px;
+  }
+  .period-tab {
+    font-size: 10px;
+    padding: 4px 10px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-family: 'Space Mono';
+    color: var(--text-muted);
+    transition: all 0.2s;
+  }
+  .period-tab.active {
+    background: var(--surface3);
+    color: var(--text);
+  }
+
+  .bar-chart {
+    display: flex;
+    align-items: flex-end;
+    gap: 6px;
+    height: 80px;
+  }
+  .bar-col {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    height: 100%;
+    justify-content: flex-end;
+  }
+  .bar {
+    width: 100%;
+    border-radius: 4px 4px 0 0;
+    transition: height 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+    min-height: 4px;
+    position: relative;
+  }
+  .bar.hr { background: linear-gradient(to top, rgba(255,77,109,0.3), rgba(255,77,109,0.8)); }
+  .bar.spo { background: linear-gradient(to top, rgba(0,229,176,0.3), rgba(0,229,176,0.8)); }
+  .bar.active { box-shadow: 0 0 8px rgba(255,182,39,0.5); }
+  .bar-day {
+    font-size: 9px;
+    color: var(--text-muted);
+    font-family: 'Space Mono';
+  }
+
+  /* Bottom nav */
+  .bottom-nav {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: rgba(10,10,15,0.95);
+    backdrop-filter: blur(20px);
+    border-top: 1px solid var(--border);
+    padding: 12px 20px 28px;
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    z-index: 100;
+  }
+  .nav-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    cursor: pointer;
+    opacity: 0.4;
+    transition: all 0.2s;
+    padding: 4px 12px;
+    border-radius: 12px;
+  }
+  .nav-item.active {
+    opacity: 1;
+    background: var(--surface2);
+  }
+  .nav-icon { font-size: 22px; }
+  .nav-label {
+    font-size: 10px;
+    font-weight: 500;
+    color: var(--text-dim);
+    font-family: 'Space Mono';
+    letter-spacing: 0.5px;
+  }
+  .nav-item.active .nav-label { color: var(--accent); }
+
+  /* Alert banner */
+  .alert-banner {
+    background: linear-gradient(135deg, rgba(255,77,109,0.15), rgba(255,107,53,0.1));
+    border: 1px solid rgba(255,77,109,0.3);
+    border-radius: 16px;
+    padding: 14px 16px;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    position: relative;
+    overflow: hidden;
+  }
+  .alert-banner::before {
+    content: '';
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    width: 3px;
+    background: var(--accent3);
+    border-radius: 0 2px 2px 0;
+  }
+  .alert-icon { font-size: 24px; flex-shrink: 0; }
+  .alert-text { flex: 1; }
+  .alert-title {
+    font-weight: 700;
+    font-size: 13px;
+    color: var(--accent3);
+    margin-bottom: 2px;
+    font-family: 'Space Mono';
+    letter-spacing: 0.5px;
+  }
+  .alert-body { font-size: 12px; color: var(--text-dim); }
+  .alert-close {
+    width: 24px; height: 24px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.08);
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer;
+    font-size: 12px;
+    color: var(--text-dim);
+    flex-shrink: 0;
+  }
+
+  /* Device status row */
+  .device-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: var(--surface);
+    border-radius: 16px;
+    padding: 14px 16px;
+    margin-bottom: 20px;
+    border: 1px solid var(--border);
+  }
+  .device-img {
+    width: 40px;
+    height: 40px;
+    background: linear-gradient(135deg, var(--surface3), var(--surface2));
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    border: 1px solid var(--border-active);
+  }
+  .device-text { flex: 1; }
+  .device-name {
+    font-size: 13px;
+    font-weight: 600;
+    margin-bottom: 2px;
+  }
+  .device-sub { font-size: 11px; color: var(--text-dim); }
+  .battery-wrap {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 4px;
+  }
+  .battery-label {
+    font-size: 11px;
+    color: var(--accent);
+    font-family: 'Space Mono';
+    font-weight: 700;
+  }
+  .battery-bar {
+    width: 36px;
+    height: 8px;
+    background: var(--surface3);
+    border-radius: 4px;
+    overflow: hidden;
+    border: 1px solid var(--border-active);
+  }
+  .battery-fill {
+    height: 100%;
+    background: var(--accent);
+    border-radius: 4px;
+    width: 78%;
+  }
+
+  /* Animation classes */
+  .fade-up {
+    animation: fadeUp 0.6s ease both;
+  }
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(16px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* Stagger delays */
+  .d1 { animation-delay: 0.05s; }
+  .d2 { animation-delay: 0.12s; }
+  .d3 { animation-delay: 0.19s; }
+  .d4 { animation-delay: 0.26s; }
+  .d5 { animation-delay: 0.33s; }
+  .d6 { animation-delay: 0.40s; }
+  .d7 { animation-delay: 0.47s; }
+  .d8 { animation-delay: 0.54s; }
+  .d9 { animation-delay: 0.61s; }
+
+  /* Value update animation */
+  @keyframes value-flash {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+  }
+  .updating { animation: value-flash 0.4s ease; }
+
+  /* Radial progress for spo2 */
+  .radial-wrap {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 8px 0;
+  }
+  .radial-svg { transform: rotate(-90deg); }
+  .radial-track { fill: none; stroke: var(--surface3); stroke-width: 4; }
+  .radial-fill {
+    fill: none;
+    stroke: var(--spo2-color);
+    stroke-width: 4;
+    stroke-linecap: round;
+    transition: stroke-dashoffset 1s cubic-bezier(0.34, 1.56, 0.64, 1);
+    filter: drop-shadow(0 0 3px var(--spo2-color));
+  }
+
+  /* Tooltip pill */
+  .info-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background: var(--surface3);
+    border-radius: 20px;
+    padding: 3px 8px 3px 6px;
+    font-size: 10px;
+    color: var(--text-dim);
+    font-family: 'Space Mono';
+  }
+  .info-dot { width: 6px; height: 6px; border-radius: 50%; }
+  .info-dot.ok { background: var(--accent); }
+  .info-dot.warn { background: var(--accent4); }
+  .info-dot.bad { background: var(--accent3); }
+
+  /* Scroll indicator */
+  .scroll-hint {
+    text-align: center;
+    font-size: 10px;
+    color: var(--text-muted);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    font-family: 'Space Mono';
+    padding: 8px 0;
+    animation: bounce 2s ease infinite;
+  }
+  @keyframes bounce {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-4px); }
+  }
+
+  /* Label outside phone */
+  .demo-label {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 8px 14px;
+    font-size: 11px;
+    color: var(--text-dim);
+    font-family: 'Space Mono';
+    pointer-events: none;
+  }
+  .demo-label strong { color: var(--accent); }
+</style>
+</head>
+<body>
+
+<div class="phone-frame">
+  <!-- Dynamic island -->
+  <div class="dynamic-island">
+    <div class="island-dot cam"></div>
+    <div class="island-dot green"></div>
+  </div>
+
+  <!-- Screen -->
+  <div class="screen">
+
+    <!-- Header -->
+    <div class="header fade-up d1">
+      <div class="header-left">
+        <div class="greeting">สวัสดีตอนเช้า,</div>
+        <div class="user-name">Tanapat <span>K.</span></div>
+      </div>
+      <div class="header-right">
+        <div class="avatar">TK</div>
+        <div class="notif-badge">2</div>
+      </div>
+    </div>
+
+    <!-- Live status -->
+    <div class="live-bar fade-up d2">
+      <div class="live-indicator">
+        <div class="live-dot"></div>
+        LIVE
+      </div>
+      <div style="text-align:center">
+        <div style="font-size:10px; color:var(--text-muted); font-family:Space Mono">อัพเดทล่าสุด</div>
+        <div style="font-size:12px; font-weight:600; color:var(--text); font-family:Space Mono" id="clock">--:--:--</div>
+      </div>
+      <div class="device-info">
+        <strong>ESP32 MAX30102</strong>
+        BLE Connected
+      </div>
+    </div>
+
+    <!-- Alert banner -->
+    <div class="alert-banner fade-up d2" id="alertBanner">
+      <div class="alert-icon">⚡</div>
+      <div class="alert-text">
+        <div class="alert-title">HR ELEVATED</div>
+        <div class="alert-body">Heart rate 107 BPM — ตรวจพบค่าผิดปกติ</div>
+      </div>
+      <div class="alert-close" onclick="document.getElementById('alertBanner').style.display='none'">✕</div>
+    </div>
+
+    <!-- Recovery card -->
+    <div class="recovery-card fade-up d3">
+      <div class="recovery-label">Recovery Score</div>
+      <div class="recovery-main">
+        <div class="recovery-score" id="recoveryScore">78</div>
+        <div class="recovery-right">
+          <div class="recovery-status">🟡 พอดี</div>
+          <div class="recovery-sub">เหนื่อยล้าต่ำ-ปานกลาง</div>
+        </div>
+      </div>
+      <!-- Progress bar -->
+      <div class="gauge-container">
+        <svg class="gauge-svg" viewBox="0 0 300 6" preserveAspectRatio="none">
+          <defs>
+            <linearGradient id="gaugeGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+              <stop offset="0%" stop-color="#ff4d6d"/>
+              <stop offset="33%" stop-color="#ffb627"/>
+              <stop offset="66%" stop-color="#00e5b0"/>
+              <stop offset="100%" stop-color="#7c6cff"/>
+            </linearGradient>
+          </defs>
+          <line x1="3" y1="3" x2="297" y2="3" class="gauge-track"/>
+          <line x1="3" y1="3" x2="234" y2="3" class="gauge-fill" style="stroke:url(#gaugeGrad);fill:none;stroke-width:6;stroke-linecap:round;"/>
+        </svg>
+        <div style="display:flex;justify-content:space-between;margin-top:4px;">
+          <span style="font-size:9px;color:var(--text-muted);font-family:Space Mono">0</span>
+          <span style="font-size:9px;color:var(--text-muted);font-family:Space Mono">100</span>
+        </div>
+      </div>
+      <div class="recovery-stats">
+        <div class="r-stat">
+          <div class="r-stat-label">HRV</div>
+          <div class="r-stat-value" style="color:var(--accent2)">52</div>
+          <div class="r-stat-unit">ms</div>
+        </div>
+        <div class="r-stat">
+          <div class="r-stat-label">RHR</div>
+          <div class="r-stat-value" style="color:var(--accent)">58</div>
+          <div class="r-stat-unit">BPM</div>
+        </div>
+        <div class="r-stat">
+          <div class="r-stat-label">Sleep</div>
+          <div class="r-stat-value" style="color:var(--accent4)">6.8</div>
+          <div class="r-stat-unit">hrs</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Metrics title -->
+    <div class="section-title fade-up d4">
+      VITALS NOW <span>ดูทั้งหมด →</span>
+    </div>
+
+    <!-- ECG waveform -->
+    <div class="waveform-card fade-up d4">
+      <div class="ecg-header">
+        <div class="ecg-title-area">
+          <div class="ecg-icon">❤️</div>
+          <div class="ecg-title">ECG Live</div>
+        </div>
+        <div class="ecg-bpm" id="ecgBpm">72 <span>BPM</span></div>
+      </div>
+      <div class="ecg-wrap">
+        <svg class="ecg-svg" viewBox="0 0 800 56" preserveAspectRatio="none">
+          <defs>
+            <linearGradient id="ecgFade" x1="0%" y1="0%" x2="100%" y2="0%">
+              <stop offset="0%" stop-color="rgba(10,10,15,1)"/>
+              <stop offset="5%" stop-color="rgba(10,10,15,0)"/>
+              <stop offset="95%" stop-color="rgba(10,10,15,0)"/>
+              <stop offset="100%" stop-color="rgba(10,10,15,1)"/>
+            </linearGradient>
+          </defs>
+          <path class="ecg-path" d="M0,28 L30,28 L35,28 L40,10 L45,46 L50,28 L80,28 L130,28 L135,28 L140,10 L145,46 L150,28 L180,28 L230,28 L235,28 L240,10 L245,46 L250,28 L280,28 L330,28 L335,28 L340,10 L345,46 L350,28 L380,28 L430,28 L435,28 L440,10 L445,46 L450,28 L480,28 L530,28 L535,28 L540,10 L545,46 L550,28 L580,28 L630,28 L635,28 L640,10 L645,46 L650,28 L680,28 L730,28 L735,28 L740,10 L745,46 L750,28 L780,28 L800,28"/>
+          <rect x="0" y="0" width="800" height="56" fill="url(#ecgFade)"/>
+        </svg>
+      </div>
+    </div>
+
+    <!-- 2-col metric cards -->
+    <div class="metrics-row fade-up d5">
+      <!-- HR -->
+      <div class="metric-card alert">
+        <div class="metric-glow red"></div>
+        <div class="metric-icon-row">
+          <div class="metric-icon red">💓</div>
+          <div class="metric-badge badge-alert">HIGH</div>
+        </div>
+        <div class="metric-label">Heart Rate</div>
+        <div class="metric-value red" id="hrVal">107<span class="metric-unit">bpm</span></div>
+        <div class="sparkline-wrap">
+          <svg class="sparkline-svg" viewBox="0 0 130 36" preserveAspectRatio="none">
+            <defs>
+              <linearGradient id="hrGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+                <stop offset="0%" stop-color="rgba(255,77,109,0.4)"/>
+                <stop offset="100%" stop-color="rgba(255,77,109,0)"/>
+              </linearGradient>
+            </defs>
+            <path d="M0,28 Q10,22 20,25 Q30,28 40,15 Q50,5 60,18 Q70,28 80,20 Q90,12 100,22 Q115,30 130,10" fill="none" stroke="#ff4d6d" stroke-width="2" stroke-linecap="round"/>
+            <path d="M0,28 Q10,22 20,25 Q30,28 40,15 Q50,5 60,18 Q70,28 80,20 Q90,12 100,22 Q115,30 130,10 L130,36 L0,36Z" fill="url(#hrGrad)"/>
+          </svg>
+        </div>
+      </div>
+
+      <!-- SpO2 -->
+      <div class="metric-card">
+        <div class="metric-glow green"></div>
+        <div class="metric-icon-row">
+          <div class="metric-icon green">🫁</div>
+          <div class="metric-badge badge-normal">NORMAL</div>
+        </div>
+        <div class="metric-label">SpO₂</div>
+        <div class="metric-value green" id="spo2Val">97<span class="metric-unit">%</span></div>
+        <div class="sparkline-wrap">
+          <svg class="sparkline-svg" viewBox="0 0 130 36" preserveAspectRatio="none">
+            <defs>
+              <linearGradient id="spo2Grad" x1="0%" y1="0%" x2="0%" y2="100%">
+                <stop offset="0%" stop-color="rgba(0,229,176,0.4)"/>
+                <stop offset="100%" stop-color="rgba(0,229,176,0)"/>
+              </linearGradient>
+            </defs>
+            <path d="M0,20 Q15,18 30,19 Q50,20 70,17 Q90,15 110,16 Q120,16 130,15" fill="none" stroke="#00e5b0" stroke-width="2" stroke-linecap="round"/>
+            <path d="M0,20 Q15,18 30,19 Q50,20 70,17 Q90,15 110,16 Q120,16 130,15 L130,36 L0,36Z" fill="url(#spo2Grad)"/>
+          </svg>
+        </div>
+      </div>
+    </div>
+
+    <div class="metrics-row fade-up d5">
+      <!-- Temp -->
+      <div class="metric-card">
+        <div class="metric-glow yellow"></div>
+        <div class="metric-icon-row">
+          <div class="metric-icon yellow">🌡️</div>
+          <div class="metric-badge badge-normal">NORMAL</div>
+        </div>
+        <div class="metric-label">Temperature</div>
+        <div class="metric-value yellow" id="tempVal">36.9<span class="metric-unit">°C</span></div>
+        <div class="sparkline-wrap">
+          <svg class="sparkline-svg" viewBox="0 0 130 36" preserveAspectRatio="none">
+            <defs>
+              <linearGradient id="tempGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+                <stop offset="0%" stop-color="rgba(255,182,39,0.4)"/>
+                <stop offset="100%" stop-color="rgba(255,182,39,0)"/>
+              </linearGradient>
+            </defs>
+            <path d="M0,22 Q20,20 40,21 Q60,22 80,20 Q100,18 120,19 L130,18" fill="none" stroke="#ffb627" stroke-width="2" stroke-linecap="round"/>
+            <path d="M0,22 Q20,20 40,21 Q60,22 80,20 Q100,18 120,19 L130,18 L130,36 L0,36Z" fill="url(#tempGrad)"/>
+          </svg>
+        </div>
+      </div>
+
+      <!-- HRV -->
+      <div class="metric-card">
+        <div class="metric-glow purple"></div>
+        <div class="metric-icon-row">
+          <div class="metric-icon purple">🧠</div>
+          <div class="metric-badge badge-warn">AVG</div>
+        </div>
+        <div class="metric-label">HRV</div>
+        <div class="metric-value purple" id="hrvVal">52<span class="metric-unit">ms</span></div>
+        <div class="sparkline-wrap">
+          <svg class="sparkline-svg" viewBox="0 0 130 36" preserveAspectRatio="none">
+            <defs>
+              <linearGradient id="hrvGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+                <stop offset="0%" stop-color="rgba(124,108,255,0.4)"/>
+                <stop offset="100%" stop-color="rgba(124,108,255,0)"/>
+              </linearGradient>
+            </defs>
+            <path d="M0,25 Q10,28 20,22 Q30,16 45,20 Q60,24 75,16 Q90,10 105,18 Q118,24 130,14" fill="none" stroke="#7c6cff" stroke-width="2" stroke-linecap="round"/>
+            <path d="M0,25 Q10,28 20,22 Q30,16 45,20 Q60,24 75,16 Q90,10 105,18 Q118,24 130,14 L130,36 L0,36Z" fill="url(#hrvGrad)"/>
+          </svg>
+        </div>
+      </div>
+    </div>
+
+    <!-- Status grid -->
+    <div class="section-title fade-up d6">HEALTH STATUS</div>
+    <div class="status-grid fade-up d6">
+      <div class="status-item ok">
+        <div class="status-icon">💧</div>
+        <div class="status-name">Hydration</div>
+        <div class="status-value">Good</div>
+      </div>
+      <div class="status-item warn">
+        <div class="status-icon">😴</div>
+        <div class="status-name">Sleep</div>
+        <div class="status-value">6.8h</div>
+      </div>
+      <div class="status-item alert">
+        <div class="status-icon">🏃</div>
+        <div class="status-name">Strain</div>
+        <div class="status-value">High</div>
+      </div>
+    </div>
+
+    <!-- Weekly trend -->
+    <div class="trend-card fade-up d7">
+      <div class="trend-header">
+        <div class="trend-title">Weekly HR Trend</div>
+        <div class="period-tabs">
+          <div class="period-tab">1D</div>
+          <div class="period-tab active">1W</div>
+          <div class="period-tab">1M</div>
+        </div>
+      </div>
+      <div class="bar-chart">
+        <div class="bar-col">
+          <div class="bar hr" style="height:50px"></div>
+          <div class="bar-day">จ</div>
+        </div>
+        <div class="bar-col">
+          <div class="bar hr" style="height:65px"></div>
+          <div class="bar-day">อ</div>
+        </div>
+        <div class="bar-col">
+          <div class="bar hr" style="height:42px"></div>
+          <div class="bar-day">พ</div>
+        </div>
+        <div class="bar-col">
+          <div class="bar hr" style="height:70px"></div>
+          <div class="bar-day">พฤ</div>
+        </div>
+        <div class="bar-col">
+          <div class="bar hr active" style="height:75px; background:linear-gradient(to top,rgba(255,107,53,0.5),rgba(255,77,109,1)); box-shadow:0 0 12px rgba(255,77,109,0.5)"></div>
+          <div class="bar-day" style="color:var(--accent3)">ศ</div>
+        </div>
+        <div class="bar-col">
+          <div class="bar hr" style="height:40px;opacity:0.4"></div>
+          <div class="bar-day">ส</div>
+        </div>
+        <div class="bar-col">
+          <div class="bar hr" style="height:35px;opacity:0.4"></div>
+          <div class="bar-day">อา</div>
+        </div>
+      </div>
+      <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap">
+        <div class="info-pill"><div class="info-dot ok"></div>SpO₂ Avg 97%</div>
+        <div class="info-pill"><div class="info-dot warn"></div>HR Avg 78bpm</div>
+        <div class="info-pill"><div class="info-dot bad"></div>Strain สูง</div>
+      </div>
+    </div>
+
+    <!-- Device card -->
+    <div class="section-title fade-up d8">DEVICE</div>
+    <div class="device-row fade-up d8">
+      <div class="device-img">⌚</div>
+      <div class="device-text">
+        <div class="device-name">VitalSync Band v2</div>
+        <div class="device-sub">ESP32 · MAX30102 · BLE 5.0</div>
+      </div>
+      <div class="battery-wrap">
+        <div class="battery-label">78%</div>
+        <div class="battery-bar"><div class="battery-fill"></div></div>
+      </div>
+    </div>
+
+    <div class="scroll-hint fade-up d9">▼ scroll ▼</div>
+
+  </div><!-- /screen -->
+
+  <!-- Bottom nav -->
+  <div class="bottom-nav">
+    <div class="nav-item active">
+      <div class="nav-icon">🏠</div>
+      <div class="nav-label">หน้าหลัก</div>
+    </div>
+    <div class="nav-item">
+      <div class="nav-icon">📊</div>
+      <div class="nav-label">สถิติ</div>
+    </div>
+    <div class="nav-item">
+      <div class="nav-icon">🔔</div>
+      <div class="nav-label">แจ้งเตือน</div>
+    </div>
+    <div class="nav-item">
+      <div class="nav-icon">⚙️</div>
+      <div class="nav-label">ตั้งค่า</div>
+    </div>
+  </div>
+
+</div><!-- /phone-frame -->
+
+<div class="demo-label">IoT Health Monitor · <strong>VitalSync</strong> · Demo</div>
+
+<script>
+  // Clock
+  function updateClock() {
+    const now = new Date();
+    const h = String(now.getHours()).padStart(2,'0');
+    const m = String(now.getMinutes()).padStart(2,'0');
+    const s = String(now.getSeconds()).padStart(2,'0');
+    document.getElementById('clock').textContent = `${h}:${m}:${s}`;
+  }
+  setInterval(updateClock, 1000);
+  updateClock();
+
+  // Simulate live sensor data
+  let hr = 107, spo2 = 97, temp = 36.9, hrv = 52;
+
+  function lerp(a, b, t) { return a + (b - a) * t; }
+  function randomWalk(val, target, step, min, max) {
+    const drift = (target - val) * 0.05 + (Math.random() - 0.5) * step;
+    return Math.min(max, Math.max(min, val + drift));
+  }
+
+  function updateValues() {
+    hr   = randomWalk(hr,   75, 3, 55, 140);
+    spo2 = randomWalk(spo2, 97, 0.5, 90, 100);
+    temp = randomWalk(temp, 36.8, 0.05, 36.0, 38.5);
+    hrv  = randomWalk(hrv,  55, 2, 20, 90);
+
+    const hrEl = document.getElementById('hrVal');
+    const spo2El = document.getElementById('spo2Val');
+    const tempEl = document.getElementById('tempVal');
+    const hrvEl = document.getElementById('hrvVal');
+    const ecgEl = document.getElementById('ecgBpm');
+
+    hrEl.innerHTML = `${Math.round(hr)}<span class="metric-unit">bpm</span>`;
+    spo2El.innerHTML = `${Math.round(spo2)}<span class="metric-unit">%</span>`;
+    tempEl.innerHTML = `${temp.toFixed(1)}<span class="metric-unit">°C</span>`;
+    hrvEl.innerHTML = `${Math.round(hrv)}<span class="metric-unit">ms</span>`;
+    ecgEl.innerHTML = `${Math.round(hr)} <span>BPM</span>`;
+
+    // Update alert style
+    const hrCard = hrEl.closest('.metric-card');
+    if (Math.round(hr) > 100) {
+      hrEl.className = 'metric-value red';
+      hrCard.classList.add('alert');
+      hrCard.querySelector('.metric-badge').textContent = 'HIGH';
+      hrCard.querySelector('.metric-badge').className = 'metric-badge badge-alert';
+    } else {
+      hrEl.className = 'metric-value red';
+      hrCard.classList.remove('alert');
+      hrCard.querySelector('.metric-badge').textContent = 'NORMAL';
+      hrCard.querySelector('.metric-badge').className = 'metric-badge badge-normal';
+    }
+
+    // Flash
+    [hrEl, spo2El, tempEl, hrvEl].forEach(el => {
+      el.classList.add('updating');
+      setTimeout(() => el.classList.remove('updating'), 400);
+    });
+  }
+
+  setInterval(updateValues, 2000);
+
+  // Nav tabs interaction
+  document.querySelectorAll('.nav-item').forEach(item => {
+    item.addEventListener('click', () => {
+      document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+      item.classList.add('active');
+    });
+  });
+
+  // Period tabs interaction
+  document.querySelectorAll('.period-tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+      document.querySelectorAll('.period-tab').forEach(t => t.classList.remove('active'));
+      tab.classList.add('active');
+    });
+  });
+</script>
+
+</body>
+</html>
